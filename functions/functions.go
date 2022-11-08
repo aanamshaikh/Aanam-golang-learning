@@ -12,6 +12,8 @@ func swap(x, y int) (int, int) {
 
 func main() {
 	fmt.Println(add(42, 13))
+
 	a, b := swap(1, 2)
 	fmt.Println(a, b)
+
 }
