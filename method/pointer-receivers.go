@@ -20,6 +20,7 @@ func (v *Vertex) Scale(f float64) {
 
 func main() {
 	v := Vertex{3, 4}
-	v.Scale(10)
+	
 	fmt.Println(v.Abs())
+	v.Scale(10)
 }
