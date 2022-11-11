@@ -1,7 +1,14 @@
 package main
 
 import (
+	"bufio"
+	"encoding/csv"
 	"fmt"
+	"io"
+	"log"
+	"os"
+	"reflect"
+	"strconv"
 )
 
 type student struct {
@@ -54,6 +61,7 @@ func overallTopper(students []student) student {
 }
 
 var universityTopper = map[string]student{}
+
 func topperPerUniversity(students []student) {
 
 	topper := student{"", "", "", 0, 0, 0, 0}
@@ -66,8 +74,8 @@ func topperPerUniversity(students []student) {
 			if students[j].university == "Mumbai University" && maxScore < students[j].getAverageScore() {
 				topper = students[j]
 			}
-			universityTopper["Mumbai University"]=topper
-			
+			universityTopper["Mumbai University"] = topper
+
 		}
 
 		if students[j].university == "Delhi University" {
@@ -75,19 +83,19 @@ func topperPerUniversity(students []student) {
 			if students[j].university == "Delhi University" && maxScore < students[j].getAverageScore() {
 				topper = students[j]
 			}
-			universityTopper["Delhi University"]=topper
-			
+			universityTopper["Delhi University"] = topper
+
 		}
 		if students[j].university == "Pune University" {
 
 			if students[j].university == "Pune University" && maxScore < students[j].getAverageScore() {
 				topper = students[j]
 			}
-			universityTopper["Pune University"]=topper
+			universityTopper["Pune University"] = topper
 		}
 
 	}
-	
+
 }
 
 func main() {
@@ -106,7 +114,37 @@ func main() {
 	// topper := overallTopper(studentsList)
 	// fmt.Printf("The overall Topper is %v %v with the score %v", topper.firstname, topper.lastname, topper.getAverageScore())
 
-	topperPerUniversity(studentsList)
-	fmt.Println(universityTopper)
+	// topperPerUniversity(studentsList)
+	// fmt.Println(universityTopper)
 
+	// read from csv and set to array
+	// read from csv file and set the universities to array making it dynamic
+
+	csvFile, _ := os.Open("student-data.csv")
+	reader := csv.NewReader(bufio.NewReader(csvFile))
+	var students []student
+	for {
+		line, error := reader.Read()
+		if error == io.EOF {
+			break
+		} else if error != nil {
+			log.Fatal(error)
+		}
+
+
+		a, _ := strconv.ParseFloat(line[3], 64)
+        fmt.Println(a,reflect.TypeOf(a))
+		students = append(students, student{
+			firstname:  line[0],
+			lastname:   line[1],
+			university: line[2],
+			test1Score: a,
+			// test2Score: line[4],
+			// test3Score: line[5],
+			// test4Score: line[6],
+		})
+		fmt.Println(students)
+
+		
+	}
 }
