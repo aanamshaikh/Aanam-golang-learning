@@ -7,7 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"reflect"
+	"sort"
 	"strconv"
 )
 
@@ -60,67 +60,14 @@ func overallTopper(students []student) student {
 	return topper
 }
 
-var universityTopper = map[string]student{}
-
-func topperPerUniversity(students []student) {
-
-	topper := student{"", "", "", 0, 0, 0, 0}
-	fmt.Println(topper)
-	var maxScore float64 = 0
-
-	for j := 0; j < len(students); j++ {
-		if students[j].university == "Mumbai University" {
-
-			if students[j].university == "Mumbai University" && maxScore < students[j].getAverageScore() {
-				topper = students[j]
-			}
-			universityTopper["Mumbai University"] = topper
-
-		}
-
-		if students[j].university == "Delhi University" {
-
-			if students[j].university == "Delhi University" && maxScore < students[j].getAverageScore() {
-				topper = students[j]
-			}
-			universityTopper["Delhi University"] = topper
-
-		}
-		if students[j].university == "Pune University" {
-
-			if students[j].university == "Pune University" && maxScore < students[j].getAverageScore() {
-				topper = students[j]
-			}
-			universityTopper["Pune University"] = topper
-		}
-
-	}
-
+func ParseToFloat(number string) float64 {
+	num, _ := strconv.ParseInt(number, 10, 64)
+	// fmt.Println(number,num)
+	return float64(num)
 }
 
-func main() {
-
-	var studentsList []student
-	studentsList = append(studentsList, student{"Aanam", "Shaikh", "Mumbai University", 45, 56, 78, 35})
-	studentsList = append(studentsList, student{"Harry", "Styles", "Delhi University", 89, 13, 49, 65})
-	studentsList = append(studentsList, student{"Tom", "Gilford", "Mumbai University", 90, 13, 45, 55})
-	studentsList = append(studentsList, student{"John", "Smith", "Pune University", 98, 78, 78, 89})
-
-	// for _, studentsList := range studentsList {
-	// 	finalScore := studentsList.getAverageScore()
-	// 	grade := calculateGrade(finalScore)
-	// 	fmt.Printf("The final Score of Student %v %v is %v and the grade is %v\n", studentsList.firstname, studentsList.lastname, finalScore, grade)
-	// }
-	// topper := overallTopper(studentsList)
-	// fmt.Printf("The overall Topper is %v %v with the score %v", topper.firstname, topper.lastname, topper.getAverageScore())
-
-	// topperPerUniversity(studentsList)
-	// fmt.Println(universityTopper)
-
-	// read from csv and set to array
-	// read from csv file and set the universities to array making it dynamic
-
-	csvFile, _ := os.Open("student-data.csv")
+func parseCSV(filepath string) []student {
+	csvFile, _ := os.Open(filepath)
 	reader := csv.NewReader(bufio.NewReader(csvFile))
 	var students []student
 	for {
@@ -131,20 +78,56 @@ func main() {
 			log.Fatal(error)
 		}
 
-
-		a, _ := strconv.ParseFloat(line[3], 64)
-        fmt.Println(a,reflect.TypeOf(a))
 		students = append(students, student{
 			firstname:  line[0],
 			lastname:   line[1],
 			university: line[2],
-			test1Score: a,
-			// test2Score: line[4],
-			// test3Score: line[5],
-			// test4Score: line[6],
+			test1Score: ParseToFloat(line[3]),
+			test2Score: ParseToFloat(line[4]),
+			test3Score: ParseToFloat(line[5]),
+			test4Score: ParseToFloat(line[6]),
 		})
-		fmt.Println(students)
-
-		
 	}
+	return students
+}
+
+func getScoreAndGradeForStudent(students []student) {
+	for _, students := range students {
+		finalScore := students.getAverageScore()
+		grade := calculateGrade(finalScore)
+		fmt.Printf("The final Score of Student %v %v is %v and the grade is %v\n", students.firstname, students.lastname, finalScore, grade)
+	}
+}
+
+func topperPerUniversity(students []student) map[string]student {
+	studentList := make(map[string]student)
+	listOfStudents:=students
+	 sort.Slice(listOfStudents, func(i, j int) bool {
+		return listOfStudents[i].university < listOfStudents[j].university
+	})
+	
+	i:=0
+	lastIndexUniv:=0
+
+	for i=0;i<len(listOfStudents);i++{ 
+			if listOfStudents[lastIndexUniv].university!=listOfStudents[i].university {
+				lastIndexUniv=i
+			}
+			studentList[listOfStudents[i].university]=overallTopper(listOfStudents[lastIndexUniv:i])
+	}
+	studentList[listOfStudents[lastIndexUniv].university]=overallTopper(listOfStudents[lastIndexUniv:])
+	
+	return studentList
+}
+
+func main() {
+	var studentsList []student = parseCSV("student-data.csv")
+
+	getScoreAndGradeForStudent(studentsList)
+
+	topper := overallTopper(studentsList)
+	fmt.Printf("The overall Topper is %v %v with the score %v", topper.firstname, topper.lastname, topper.getAverageScore())
+   
+	topperPerUniversity(studentsList)
+	fmt.Println("Students: ",topperPerUniversity(studentsList))
 }
