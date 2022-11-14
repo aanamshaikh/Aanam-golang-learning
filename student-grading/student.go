@@ -110,7 +110,7 @@ func topperPerUniversity(students []student) map[string]student {
 	lastIndexUniv:=0
 
 	for i=0;i<len(listOfStudents);i++{ 
-			if listOfStudents[lastIndexUniv].university!=listOfStudents[i].university {
+			if listOfStudents[i].university!=listOfStudents[lastIndexUniv].university {
 				lastIndexUniv=i
 			}
 			studentList[listOfStudents[i].university]=overallTopper(listOfStudents[lastIndexUniv:i])
