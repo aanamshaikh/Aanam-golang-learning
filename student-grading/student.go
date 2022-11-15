@@ -29,6 +29,13 @@ type studentGrade struct {
 	grade      string
 }
 
+func (s student) string() string {
+	return fmt.Sprintf("%v %v %v %v %v %v %v", s.firstname, s.lastname, s.university, s.test1Score, s.test2Score, s.test2Score, s.test4Score)
+}
+
+func (sg studentGrade) string() string {
+	return fmt.Sprintf("%v %v %v", sg.student.string(), sg.finalScore, sg.grade)
+}
 func getAverageScore(student student) float64 {
 	average := (student.test1Score + student.test2Score + student.test3Score + student.test4Score) / 4
 	return float64(average)
@@ -106,7 +113,6 @@ func overallTopper(students []studentGrade) studentGrade {
 
 func ParseToFloat(number string) float64 {
 	num, _ := strconv.ParseInt(number, 10, 64)
-	// fmt.Println(number,num)
 	return float64(num)
 }
 
@@ -133,7 +139,8 @@ func main() {
 	studentGrades := getScoreAndGrades(studentsList)
 	for _, s := range studentGrades {
 
-		fmt.Printf("student %v %v has secured %v marks with %v grade\n", s.student.firstname, s.student.lastname, s.finalScore, s.grade)
+		fmt.Println(s.string())
+		// fmt.Printf("student %v %v has secured %v marks with %v grade\n", s.student.firstname, s.student.lastname, s.finalScore, s.grade)
 	}
 
 	topper := overallTopper(studentGrades)

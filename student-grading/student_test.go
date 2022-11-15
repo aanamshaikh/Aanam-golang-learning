@@ -3,6 +3,7 @@ package main
 import (
 	"reflect"
 	"testing"
+
 )
 
 func TestCalculateScoreAndGrade(t *testing.T) {
@@ -16,10 +17,13 @@ func TestCalculateScoreAndGrade(t *testing.T) {
 }
 
 func TestCalculateGrade(t *testing.T) {
+    // assert := assert.New(t)
 	stud := student{"Aanam", "Shaikh", "Mumbai University", 78, 59, 69, 59}
 	avg := getAverageScore(stud)
 	actualString := calculateGrade(avg)
 	expectedString := "C"
+
+    // assert.Equal{actualString,expectedString,"Grades are not equal"}
 	if actualString != expectedString {
 		t.Errorf("Expected String(%v) is not same as"+
 			" actual string (%v)", expectedString, actualString)
@@ -87,4 +91,5 @@ func TestParseCSV(t *testing.T) {
         t.Errorf("Expected size(%v) is not same as"+
 			" actual size (%v)",len(expectedList) ,len(expectedList))
     }
+
 }

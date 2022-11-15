@@ -1,0 +1,5 @@
+search for the file recusively -D
+get the relative path for the file -D
+count the number of charater in the relative path -D
+replace the relative path in the path 
+        with number of chararter of rel path  with blank spaces
