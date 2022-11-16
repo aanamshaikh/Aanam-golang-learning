@@ -134,39 +134,54 @@ func searchDirOnly(file string){
 		}
 }
 
-// func searchRecursivelyWithRelativePath(file string) {
-// 	var totalDir int
-//     var totalfiles int
-// 	err := filepath.Walk(file,
-// 		func(path string, info os.FileInfo, err error) error {
-// 			if err != nil {
-// 				return err
-// 			}
+func searchRecursivelyWithRelativePath(file string) {
+	var totalDir int
+    var totalfiles int
+	err := filepath.Walk(file,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+					
+			x := len(strings.Split(path,"/"))
 			
-// 			rel, err := filepath.Rel(file, path)
-// 			x := len(strings.Split(rel, "/"))
-			
-// 			if(info.IsDir()){
-// 				totalDir++
-// 			}
-// 			totalfiles++
-			
-// 			fmt.Printf("%v%v\n",strings.Repeat("  ",x),rel)
-			
-// 			return nil
-// 		})
-// 		fmt.Printf("%v directories ,%v files\n",totalDir-1,totalfiles)
+			if(info.Name()==file){
+				
+				fmt.Printf("  %v\n",info.Name())
+			}else{
+				
+				fmt.Printf("%v%v%v\n",strings.Repeat("  ",x),BoxUpAndRig+BoxHor,path)
+
+			}
+
+			if info.IsDir(){
+				totalDir++
+			}
+			totalfiles++
+			// fmt.Print("|")
+			return nil
+		})
+		fmt.Printf("%v directories ,%v files\n",totalDir-1,totalfiles)
 		
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// }
+		if err != nil {
+			log.Fatal(err)
+		}
+}
 
 func main() {
 
 	data := getInput()
-    // searchRecursively(data.filepath)
-	// searchDirOnly(data.filepath)
+
+	fmt.Println("#----------Recursive Search-----------#")
+    searchRecursively(data.filepath)
+
+	fmt.Println("#----------Recursive Search For Dir -----------#")
+	searchDirOnly(data.filepath)
+
+	fmt.Println("#----------Recursive Search with file permission-----------#")
 	searchRecursivelyWithFilePermisssion(data.filepath)
+
+	fmt.Println("#----------Recursive Search with relative path-----------#")
+    searchRecursivelyWithRelativePath(data.filepath)
 
 }
