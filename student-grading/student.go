@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"sort"
 
 	// "sort"
 	"strconv"
@@ -104,11 +103,20 @@ func getScoreAndGrades(students []student) []studentGrade {
 }
 
 func overallTopper(students []studentGrade) studentGrade {
-	topper := students
-	sort.Slice(topper, func(i, j int) bool {
-		return topper[i].finalScore < topper[j].finalScore
-	})
-	return topper[len(topper)-1]
+	var topper studentGrade
+
+	if len(students) < 1 {
+		return topper
+	}
+
+	topper = students[0]
+
+	for i := 0; i < len(students); i++ {
+		if topper.finalScore < students[i].finalScore {
+			topper = students[i]
+		}
+	}
+	return topper
 }
 
 func ParseToFloat(number string) float64 {
@@ -119,16 +127,17 @@ func ParseToFloat(number string) float64 {
 func topperPerUniversity(students []studentGrade) map[string]studentGrade {
 	topperPerUniversity := make(map[string]studentGrade, 0) // mum
 
-	for _, s := range students { // Mum ,pune, delhi
+	for _, s := range students { // Mum ,pune , delhi
 
 		student, ok := topperPerUniversity[s.student.university] //mumbai
 		if ok {
 			if s.finalScore > student.finalScore {
 				topperPerUniversity[s.student.university] = s
+				continue
 			}
-		} else {
-			topperPerUniversity[s.student.university] = studentGrade{student: s.student, finalScore: s.finalScore, grade: s.grade}
-		}
+		} 
+		topperPerUniversity[s.student.university] = studentGrade{student: s.student, finalScore: s.finalScore, grade: s.grade}
+		
 	}
 	return topperPerUniversity
 }
