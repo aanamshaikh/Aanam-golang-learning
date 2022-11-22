@@ -71,10 +71,9 @@ func TestPrintWithLevel(t *testing.T) {
 	cfg := TreeConfig{"tree", "dir", false, false, false, 1}
 	got := tree(cfg)
 
-	
 	assert := assert.New(t)
 	for i := 0; i < len(want); i++ {
-	assert.Equal(want[i], got[i], "got and want are not equal")
+		assert.Equal(want[i], got[i], "got and want are not equal")
 	}
 }
 

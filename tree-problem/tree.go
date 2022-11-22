@@ -110,7 +110,11 @@ func tree(cfg TreeConfig) []string {
 			if info.Name() == cfg.dirName {
 				dir := fmt.Sprintf("  %v\n", info.Name())
 				s = append(s, dir)
-			} else {
+			}
+			if {
+				
+			}
+			 else {
 				s = append(s, getTree(args)...)
 			}
 			return nil
@@ -187,6 +191,10 @@ func getTree(args args) []string {
 		s = append(s, x)
 	}
 	return s
+}
+
+func getXmlTree(){
+
 }
 
 func printTree(tree []string) {
