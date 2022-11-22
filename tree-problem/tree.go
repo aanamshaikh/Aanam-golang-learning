@@ -190,7 +190,9 @@ func getTree(args args) []string {
 }
 
 func printTree(tree []string) {
+	fmt.Println("len: ",len(tree))
 	for _, t := range tree {
-		fmt.Print(t)
+		fmt.Println("t: ",t)
 	}
 }
+ 

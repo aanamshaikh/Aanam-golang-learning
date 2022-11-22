@@ -1,100 +1,98 @@
 package main
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestPrintDirOnly(t *testing.T) {
 
 	want := []string{
-		"dir",
-		tab+BoxDowAndRig+BoxHor+"subdir1",
-		tab+tab+BoxDowAndRig+BoxHor+"subdir",
-		tab+BoxDowAndRig+BoxHor+"subdir2",
+		tab + "dir\n",
+		tab + tab + BoxUpAndRig + BoxHor + "subdir1\n",
+		tab + tab + tab + BoxUpAndRig + BoxHor + "subdir\n",
+		tab + tab + BoxUpAndRig + BoxHor + "subdir2\n",
 	}
 
-	cfg := TreeConfig{"tree","dir",true,false,false,0}
-	got:=tree(cfg)
+	cfg := TreeConfig{"tree", "dir", true, false, false, 0}
+	got := tree(cfg)
+	assert := assert.New(t)
+	for i := 0; i < len(want); i++ {
+		assert.Equal(want[i], got[i], "got and want are not equal")
 
-	for i:=0; i<len(want); i++ {
-		if got[i] != want[i] {
-			t.Errorf("got %v does not match  want %v ",got[i],want[i])
-		}
 	}
 }
 
 func TestPrintWithPermissions(t *testing.T) {
 
 	want := []string{
-		"dir",
-		tab+BoxDowAndRig+BoxHor+"[-rw-rw-r--]"+"file23",
-		tab+BoxDowAndRig+BoxHor+"[dwxrwxr-x]"+"subdir1",
-		tab+tab+BoxDowAndRig+BoxHor+"[dwxrwxr-x]"+"subdir",
+		tab + "dir\n",
+		tab + tab + BoxUpAndRig + BoxHor + "[-rw-rw-r--]file23\n",
+		tab + tab + BoxUpAndRig + BoxHor + "[drwxrwxr-x]subdir1\n",
+		tab + tab + tab + BoxUpAndRig + BoxHor + "[drwxrwxr-x]subdir\n",
 	}
 
-	cfg := TreeConfig{"tree","dir",false,true,false,0}
-	got:=tree(cfg)
+	cfg := TreeConfig{"tree", "dir", false, true, false, 0}
+	got := tree(cfg)
 
-	for i:=0; i<len(want); i++ {
-		if got[i] != want[i] {
-			t.Errorf("got %v does not match  want %v ",got[i],want[i])
-		}
+	assert := assert.New(t)
+	for i := 0; i < len(want); i++ {
+		assert.Equal(want[i], got[i], "got and want are not equal")
 	}
 }
 
 func TestPrintWithRelPath(t *testing.T) {
 
 	want := []string{
-		"dir",
-		tab+BoxDowAndRig+BoxHor+"dir/file23",
-		tab+BoxDowAndRig+BoxHor+"dir/subdir1",
-		tab+tab+BoxDowAndRig+BoxHor+"dir/subdir1/subdir",
+		tab + "dir\n",
+		tab + tab + BoxUpAndRig + BoxHor + "dir/file23\n",
+		tab + tab + BoxUpAndRig + BoxHor + "dir/subdir1\n",
+		tab + tab + tab + BoxUpAndRig + BoxHor + "dir/subdir1/subdir\n",
 	}
 
-	cfg := TreeConfig{"tree","dir",false,false,true,0}
-	got:=tree(cfg)
+	cfg := TreeConfig{"tree", "dir", false, false, true, 0}
+	got := tree(cfg)
 
-	for i:=0; i<len(want); i++ {
-		if got[i] != want[i] {
-			t.Errorf("got %v does not match  want %v ",got[i],want[i])
-		}
+	assert := assert.New(t)
+	for i := 0; i < len(want); i++ {
+		assert.Equal(want[i], got[i], "got and want are not equal")
+
 	}
 }
 
 func TestPrintWithLevel(t *testing.T) {
 
 	want := []string{
-		"dir",
-		tab+BoxDowAndRig+BoxHor+"file23",
-		tab+BoxDowAndRig+BoxHor+"subdir1",
-		tab+BoxDowAndRig+BoxHor+"subdir2",
+		tab + "dir\n",
+		tab + tab + BoxUpAndRig + BoxHor + "file23\n",
+		tab + tab + BoxUpAndRig + BoxHor + "subdir1\n",
 	}
 
-	cfg := TreeConfig{"tree","dir",false,false,false,1}
-	got:=tree(cfg)
+	cfg := TreeConfig{"tree", "dir", false, false, false, 1}
+	got := tree(cfg)
 
-	for i:=0; i<len(want); i++ {
-		if got[i] != want[i] {
-			t.Errorf("got %v does not match  want %v ",got[i],want[i])
-		}
+	
+	assert := assert.New(t)
+	for i := 0; i < len(want); i++ {
+	assert.Equal(want[i], got[i], "got and want are not equal")
 	}
 }
 
 func TestPrintWithAllFlags(t *testing.T) {
 
 	want := []string{
-		"dir",
-		tab+BoxDowAndRig+BoxHor+"[dwxrwxr-x]"+"dir/subdir1",
-		tab+BoxDowAndRig+BoxHor+"[dwxrwxr-x]"+"dir/subdir2",
+		tab + "dir\n",
+		tab + tab + BoxUpAndRig + BoxHor + leftBrace + "drwxrwxr-x" + rightBrace + "dir/subdir1\n",
+		tab + tab + BoxUpAndRig + BoxHor + "[drwxrwxr-x]dir/subdir2\n",
 	}
 
-	cfg := TreeConfig{"tree","dir",true,true,true,1}
-	got:=tree(cfg)
+	cfg := TreeConfig{"tree", "dir", true, true, true, 1}
+	got := tree(cfg)
 
-	for i:=0; i<len(want); i++ {
-		if got[i] != want[i] {
-			t.Errorf("got %v does not match  want %v ",got[i],want[i])
-		}
+	assert := assert.New(t)
+	for i := 0; i < len(want); i++ {
+		assert.Equal(want[1], got[1], "got and want are not equal")
+
 	}
+
 }
-
