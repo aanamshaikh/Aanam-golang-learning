@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -17,6 +18,9 @@ type TreeConfig struct {
 	showPermission   bool
 	showRelPath      bool
 	level            int
+	showXML          bool
+	showJSON         bool
+	sortByTime       bool
 }
 
 type args struct {
@@ -42,11 +46,16 @@ const (
 	showPermissionC = "-p"
 	showRelPathC    = "-f"
 	levelC          = "-l"
+	OpenTag         = "<"
+	Slash           = "/"
+	CloseTag        = ">"
+	Command         = "tree"
+	PathSeperator   = string(os.PathSeparator)
+	NewLine         = "\n"
 )
 
 func main() {
-	
-	printTree(tree(input()))
+	fmt.Print(tree(input()))
 }
 
 func input() TreeConfig {
@@ -65,6 +74,9 @@ func parseCommand(line string) TreeConfig {
 	var showPermission bool
 	var showRelPath bool
 	level := 0
+	var xml bool
+	var json bool
+	var sort bool
 
 	for i := 1; i < len(x)-1; i++ {
 
@@ -80,15 +92,24 @@ func parseCommand(line string) TreeConfig {
 		if x[i] == levelC {
 			level = parseToInt(x[i+1])
 		}
+		if x[i] == "-x" {
+			xml = true
+		}
+		if x[i] == "-j" {
+			json = true
+		}
+		if x[i] == "-t" {
+			sort = true
+		}
 	}
-	cfg := TreeConfig{rootCmd, dirName, dirOnly, showPermission, showRelPath, level}
+	cfg := TreeConfig{rootCmd, dirName, dirOnly, showPermission, showRelPath, level, xml, json, sort}
 	return cfg
 }
 
-func tree(cfg TreeConfig) []string {
+func tree(cfg TreeConfig) string {
 	var dir int
 	var files int
-	var s []string
+	var s string
 
 	err := filepath.Walk(cfg.dirName,
 		func(path string, info os.FileInfo, err error) error {
@@ -96,6 +117,7 @@ func tree(cfg TreeConfig) []string {
 			if err != nil {
 				return err
 			}
+			var temp = ""
 
 			fileName := getFileFormatName(cfg.showRelPath, info.Name(), path)
 			permission := getPermission(cfg.showPermission, info.Mode().String())
@@ -106,16 +128,18 @@ func tree(cfg TreeConfig) []string {
 				dir++
 			}
 			files++
-
-			if info.Name() == cfg.dirName {
-				dir := fmt.Sprintf("  %v\n", info.Name())
-				s = append(s, dir)
-			}
-			if {
-				
-			}
-			 else {
-				s = append(s, getTree(args)...)
+			if cfg.showXML {
+				s = RecInXML(cfg.dirName, temp, 0, cfg, args)
+			} else if cfg.showJSON {
+				s = RecInJSON(cfg.dirName, temp, 0, cfg, args)
+			} else {
+				if info.Name() == cfg.dirName {
+					dir := fmt.Sprintf("  %v\n", info.Name())
+					s += dir
+				} else {
+					x := getTree(args)
+					s += strings.Join(x, ", ")
+				}
 			}
 			return nil
 		})
@@ -123,9 +147,13 @@ func tree(cfg TreeConfig) []string {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if cfg.showJSON {
 
-	fileDir := getFilesDir(cfg, files, dir)
-	s = append(s, fileDir+"\n")
+	} else {
+		fileDir := getFilesDir(cfg, files, dir)
+		s += fileDir + "\n"
+
+	}
 	return s
 }
 
@@ -193,14 +221,121 @@ func getTree(args args) []string {
 	return s
 }
 
-func getXmlTree(){
+func RecInJSON(root string, line string, n int, config TreeConfig, args args) string {
 
-}
+	files := getFiles(root, config)
 
-func printTree(tree []string) {
-	fmt.Println("len: ",len(tree))
-	for _, t := range tree {
-		fmt.Println("t: ",t)
+	if n == 0 {
+		line += leftBrace + NewLine
+		line += strings.Repeat(tab, n+2) + " { type: directory ,name:" + root + " " + getPermissions(config, args)+ ",contents: " + leftBrace + NewLine
 	}
+
+	if n > 0 && n == config.level {
+		return line + strings.Repeat(tab, n+2) + "}]" + "\n"
+	}
+
+	for _, f := range files {
+		if !f.IsDir() {
+			line += strings.Repeat(tab, n+5) + "{ type: file ,name:" + f.Name() + " " + getPermissions(config, args)+ "}" + NewLine
+			continue
+		}
+
+		line += strings.Repeat(tab, n+5) + "{ type: directory ,name:" + f.Name() + " " + getPermissions(config, args)+ ",contents: [" + NewLine
+		fileName := root + "/" + f.Name()
+		line = RecInJSON(fileName, line, n+1, config, args)
+	}
+
+	if n > 0 {
+		return line + strings.Repeat(tab, n+4) + "}]" + "\n"
+	}
+
+	return line + strings.Repeat(tab, n) + "]" + "\n"
 }
- 
+
+func getPermissions(cfg TreeConfig, args args) string {
+	per := ""
+	if cfg.showPermission {
+		p := args.info.Mode().String()
+		octal := fmt.Sprintf("%#o", args.info.Mode().Perm())
+		per = ",mod :" + octal + ",prot: " + p + ","
+	}
+	return per
+}
+
+func getFiles(root string, config TreeConfig) []fs.DirEntry {
+	files := ReadDir(root)
+
+	if config.dirOnly {
+		files = ReadOnlyDir(files)
+	}
+	if config.sortByTime {
+		SortByModTime(files)
+	}
+	return files
+}
+
+func SortByModTime(files []fs.DirEntry) {
+	sort.Slice(files, func(i, j int) bool {
+		return getFileInfo(files[i]).ModTime().Unix() < getFileInfo(files[j]).ModTime().Unix()
+	})
+}
+
+func getFileInfo(fs fs.DirEntry) fs.FileInfo {
+	fi, err := fs.Info()
+	if err != nil {
+		fmt.Println(rightBrace + err.Error() + leftBrace)
+		return fi
+	}
+	return fi
+}
+
+func ReadDir(root string) []fs.DirEntry {
+	files, err := os.ReadDir(root)
+	if err != nil {
+		fmt.Println(err)
+		return make([]fs.DirEntry, 0)
+	}
+	return files
+}
+
+func ReadOnlyDir(files []fs.DirEntry) []fs.DirEntry {
+	dirs := make([]fs.DirEntry, 0)
+	for _, f := range files {
+		if f.IsDir() {
+			dirs = append(dirs, f)
+		}
+	}
+	return dirs
+}
+
+func RecInXML(root string, line string, n int, config TreeConfig, args args) string {
+
+	files := getFiles(root, config)
+	
+	if n == 0 {
+		line+="<tree>"
+		line += strings.Repeat(Space, n+2) + OpenTag + "directory name= " + root +getPermissions(config, args)+CloseTag + NewLine
+	}
+
+	closeDirTag := OpenTag + Slash + "directory" + CloseTag + NewLine
+	if n > 0 && n == config.level {
+		return line + strings.Repeat(Space, n+3) + closeDirTag
+	}
+
+	for _, f := range files {
+		if !f.IsDir() {
+			line += strings.Repeat(Space, n+4) + OpenTag + "file" +getPermissions(config, args)+ CloseTag +
+				OpenTag + Slash + "file" + CloseTag + NewLine
+			continue
+		}
+		line += strings.Repeat(Space, n+4) + OpenTag + "directory" +getPermissions(config, args)+ CloseTag + NewLine
+		line = RecInXML(root+PathSeperator+f.Name(), line, n+1, config, args)
+	}
+
+	if n > 0 {
+		return line + strings.Repeat(Space, n+2) + closeDirTag
+	}
+
+	return line + strings.Repeat(Space, n+2) + closeDirTag
+
+}
