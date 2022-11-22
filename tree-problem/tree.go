@@ -147,13 +147,9 @@ func tree(cfg TreeConfig) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if cfg.showJSON {
 
-	} else {
-		fileDir := getFilesDir(cfg, files, dir)
-		s += fileDir + "\n"
-
-	}
+	fileDir := getFilesDir(cfg, files, dir)
+	s += fileDir + "\n"
 	return s
 }
 
@@ -198,10 +194,30 @@ func getTreeForLevel(args args) string {
 
 func getFilesDir(cfg TreeConfig, files, dir int) string {
 	var s string
+
 	if cfg.dirOnly {
-		s = fmt.Sprintf("%v directories ", dir-1)
+		if cfg.showXML {
+			s += "      <report>"+NewLine
+			s += fmt.Sprintf("%v<directories> %v </directories>%v", strings.Repeat(tab, 3), dir-1, NewLine)
+			s += "	</report"
+		} else if cfg.showJSON {
+			s += fmt.Sprintf(",%v%v{type:report,directories:%v}%v]", NewLine, strings.Repeat(tab, 3), dir-1, NewLine)
+		} else {
+			s = fmt.Sprintf("%v directories ", dir-1)
+		}
+
 	} else {
-		s = fmt.Sprintf("%v directories ,%v files\n", dir-1, files)
+		if cfg.showXML {
+			s += "		<report>"+NewLine
+			s += fmt.Sprintf("%v<directories> %v </directories>%v", strings.Repeat(tab, 3), dir-1, NewLine)
+			s += fmt.Sprintf("%v<files> %v </files>%v", strings.Repeat(tab, 3), files, NewLine)
+			s += "		</report"
+		} else if cfg.showJSON {
+			s += fmt.Sprintf(",%v%v{type:report,directories:%v,files:%v}%v]", NewLine, strings.Repeat(tab, 3), dir-1, files, NewLine)
+
+		} else {
+			s = fmt.Sprintf("%v directories ,%v files\n", dir-1, files)
+		}
 	}
 	return s
 }
@@ -227,7 +243,7 @@ func RecInJSON(root string, line string, n int, config TreeConfig, args args) st
 
 	if n == 0 {
 		line += leftBrace + NewLine
-		line += strings.Repeat(tab, n+2) + " { type: directory ,name:" + root + " " + getPermissions(config, args)+ ",contents: " + leftBrace + NewLine
+		line += strings.Repeat(tab, n+2) + " { type: directory ,name:" + root + " " + getPermissions(config, args) + ",contents: " + leftBrace + NewLine
 	}
 
 	if n > 0 && n == config.level {
@@ -236,11 +252,11 @@ func RecInJSON(root string, line string, n int, config TreeConfig, args args) st
 
 	for _, f := range files {
 		if !f.IsDir() {
-			line += strings.Repeat(tab, n+5) + "{ type: file ,name:" + f.Name() + " " + getPermissions(config, args)+ "}" + NewLine
+			line += strings.Repeat(tab, n+5) + "{ type: file ,name:" + f.Name() + " " + getPermissions(config, args) + "}" + NewLine
 			continue
 		}
 
-		line += strings.Repeat(tab, n+5) + "{ type: directory ,name:" + f.Name() + " " + getPermissions(config, args)+ ",contents: [" + NewLine
+		line += strings.Repeat(tab, n+5) + "{ type: directory ,name:" + f.Name() + " " + getPermissions(config, args) + ",contents: [" + NewLine
 		fileName := root + "/" + f.Name()
 		line = RecInJSON(fileName, line, n+1, config, args)
 	}
@@ -311,31 +327,31 @@ func ReadOnlyDir(files []fs.DirEntry) []fs.DirEntry {
 func RecInXML(root string, line string, n int, config TreeConfig, args args) string {
 
 	files := getFiles(root, config)
-	
+
 	if n == 0 {
-		line+="<tree>"
-		line += strings.Repeat(Space, n+2) + OpenTag + "directory name= " + root +getPermissions(config, args)+CloseTag + NewLine
+		line += "<tree>" + NewLine
+		line += strings.Repeat(tab, n+2) + OpenTag + "directory name= " + root + getPermissions(config, args) + CloseTag + NewLine
 	}
 
 	closeDirTag := OpenTag + Slash + "directory" + CloseTag + NewLine
 	if n > 0 && n == config.level {
-		return line + strings.Repeat(Space, n+3) + closeDirTag
+		return line + strings.Repeat(tab, n+3) + closeDirTag
 	}
 
 	for _, f := range files {
 		if !f.IsDir() {
-			line += strings.Repeat(Space, n+4) + OpenTag + "file" +getPermissions(config, args)+ CloseTag +
+			line += strings.Repeat(tab, n+4) + OpenTag + "file" + getPermissions(config, args) + CloseTag +
 				OpenTag + Slash + "file" + CloseTag + NewLine
 			continue
 		}
-		line += strings.Repeat(Space, n+4) + OpenTag + "directory" +getPermissions(config, args)+ CloseTag + NewLine
+		line += strings.Repeat(tab, n+4) + OpenTag + "directory" + getPermissions(config, args) + CloseTag + NewLine
 		line = RecInXML(root+PathSeperator+f.Name(), line, n+1, config, args)
 	}
 
 	if n > 0 {
-		return line + strings.Repeat(Space, n+2) + closeDirTag
+		return line + strings.Repeat(tab, n+2) + closeDirTag
 	}
 
-	return line + strings.Repeat(Space, n+2) + closeDirTag
+	return line + strings.Repeat(tab, n+2) + closeDirTag
 
 }
