@@ -23,12 +23,12 @@ type TreeConfig struct {
 	sortByTime       bool
 }
 
-type args struct {
-	cfg                  TreeConfig
-	info                 fs.FileInfo
-	permission, fileName string
-	lenPathSep           int
-}
+// type args struct {
+// 	cfg                  TreeConfig
+// 	info                 fs.FileInfo
+// 	permission, fileName string
+// 	lenPathSep           int
+// }
 
 const (
 	//Box Drawing Characters
@@ -122,23 +122,22 @@ func tree(cfg TreeConfig) string {
 			fileName := getFileFormatName(cfg.showRelPath, info.Name(), path)
 			permission := getPermission(cfg.showPermission, info.Mode().String())
 			lenPathSep := len(strings.Split(path, "/"))
-			args := args{cfg, info, permission, fileName, lenPathSep}
 
 			if info.IsDir() {
 				dir++
 			}
 			files++
 			if cfg.showXML {
-				s = RecInXML(cfg.dirName, temp, 0, cfg, args)
+				s = RecInXML(cfg.dirName, temp, 0, cfg, info, permission, fileName)
 			} else if cfg.showJSON {
-				s = RecInJSON(cfg.dirName, temp, 0, cfg, args)
+				s = RecInJSON(cfg.dirName, temp, 0, cfg, info, permission, fileName, lenPathSep)
 			} else {
 				if info.Name() == cfg.dirName {
 					dir := fmt.Sprintf("  %v\n", info.Name())
 					s += dir
 				} else {
-					x := getTree(args)
-					s += strings.Join(x, ", ")
+					x := getTree(cfg, info, permission, fileName, lenPathSep)
+					s += strings.Join(x, ",")
 				}
 			}
 			return nil
@@ -180,14 +179,14 @@ func getPermission(permission bool, mode string) string {
 	return per
 }
 
-func getTreeForLevel(args args) string {
+func getTreeForLevel(cfg TreeConfig, permission, fileName string, lenPathSep int) string {
 	var s string
-	if args.cfg.level > 0 {
-		if args.lenPathSep-1 <= args.cfg.level {
-			s = fmt.Sprintf("%v%v%v%v\n", strings.Repeat(tab, args.lenPathSep), BoxUpAndRig+BoxHor, args.permission, args.fileName)
+	if cfg.level > 0 {
+		if lenPathSep-1 <= cfg.level {
+			s = fmt.Sprintf("%v%v%v%v\n", strings.Repeat(tab,lenPathSep), BoxUpAndRig+BoxHor, permission,fileName)
 		}
 	} else {
-		s = fmt.Sprintf("%v%v%v%v\n", strings.Repeat(tab, args.lenPathSep), BoxUpAndRig+BoxHor, args.permission, args.fileName)
+		s = fmt.Sprintf("%v%v%v%v\n", strings.Repeat(tab,lenPathSep), BoxUpAndRig+BoxHor,permission,fileName)
 	}
 	return s
 }
@@ -222,28 +221,28 @@ func getFilesDir(cfg TreeConfig, files, dir int) string {
 	return s
 }
 
-func getTree(args args) []string {
+func getTree(cfg TreeConfig, info fs.FileInfo, permission, fileName string, lenPathSep int) []string {
 	var s []string
-	if args.cfg.dirOnly {
-		isDir := args.info.IsDir()
+	if cfg.dirOnly {
+		isDir := info.IsDir()
 		if isDir {
-			x := getTreeForLevel(args)
+			x := getTreeForLevel(cfg,permission,fileName,lenPathSep)
 			s = append(s, x)
 		}
 	} else {
-		x := getTreeForLevel(args)
+		x := getTreeForLevel(cfg,permission,fileName,lenPathSep)
 		s = append(s, x)
 	}
 	return s
 }
 
-func RecInJSON(root string, line string, n int, config TreeConfig, args args) string {
+func RecInJSON(root string, line string, n int, config TreeConfig, info fs.FileInfo, permission, fileName string, lenPathSep int) string {
 
 	files := getFiles(root, config)
 
 	if n == 0 {
 		line += leftBrace + NewLine
-		line += strings.Repeat(tab, n+2) + " { type: directory ,name:" + root + " " + getPermissions(config, args) + ",contents: " + leftBrace + NewLine
+		line += strings.Repeat(tab, n+2) + " { type: directory ,name:" + root + " " + getPermissions(config, info) + ",contents: " + leftBrace + NewLine
 	}
 
 	if n > 0 && n == config.level {
@@ -252,13 +251,13 @@ func RecInJSON(root string, line string, n int, config TreeConfig, args args) st
 
 	for _, f := range files {
 		if !f.IsDir() {
-			line += strings.Repeat(tab, n+5) + "{ type: file ,name:" + f.Name() + " " + getPermissions(config, args) + "}" + NewLine
+			line += strings.Repeat(tab, n+5) + "{ type: file ,name:" + f.Name() + " " + getPermissions(config, info) + "}" + NewLine
 			continue
 		}
 
-		line += strings.Repeat(tab, n+5) + "{ type: directory ,name:" + f.Name() + " " + getPermissions(config, args) + ",contents: [" + NewLine
+		line += strings.Repeat(tab, n+5) + "{ type: directory ,name:" + f.Name() + " " + getPermissions(config, info) + ",contents: [" + NewLine
 		fileName := root + "/" + f.Name()
-		line = RecInJSON(fileName, line, n+1, config, args)
+		line = RecInJSON(fileName, line, n+1, config, info, permission, fileName, lenPathSep)
 	}
 
 	if n > 0 {
@@ -268,11 +267,11 @@ func RecInJSON(root string, line string, n int, config TreeConfig, args args) st
 	return line + strings.Repeat(tab, n) + "]" + "\n"
 }
 
-func getPermissions(cfg TreeConfig, args args) string {
+func getPermissions(cfg TreeConfig, info fs.FileInfo) string {
 	per := ""
 	if cfg.showPermission {
-		p := args.info.Mode().String()
-		octal := fmt.Sprintf("%#o", args.info.Mode().Perm())
+		p := info.Mode().String()
+		octal := fmt.Sprintf("%#o", info.Mode().Perm())
 		per = ",mod :" + octal + ",prot: " + p + ","
 	}
 	return per
@@ -324,13 +323,13 @@ func ReadOnlyDir(files []fs.DirEntry) []fs.DirEntry {
 	return dirs
 }
 
-func RecInXML(root string, line string, n int, config TreeConfig, args args) string {
+func RecInXML(root string, line string, n int, config TreeConfig, info fs.FileInfo, permission, fileName string) string {
 
 	files := getFiles(root, config)
 
 	if n == 0 {
 		line += "<tree>" + NewLine
-		line += strings.Repeat(tab, n+2) + OpenTag + "directory name= " + root + getPermissions(config, args) + CloseTag + NewLine
+		line += strings.Repeat(tab, n+2) + OpenTag + "directory name= " + root + getPermissions(config, info) + CloseTag + NewLine
 	}
 
 	closeDirTag := OpenTag + Slash + "directory" + CloseTag + NewLine
@@ -340,12 +339,12 @@ func RecInXML(root string, line string, n int, config TreeConfig, args args) str
 
 	for _, f := range files {
 		if !f.IsDir() {
-			line += strings.Repeat(tab, n+4) + OpenTag + "file" + getPermissions(config, args) + CloseTag +
+			line += strings.Repeat(tab, n+4) + OpenTag + "file" + getPermissions(config, info) + CloseTag +
 				OpenTag + Slash + "file" + CloseTag + NewLine
 			continue
 		}
-		line += strings.Repeat(tab, n+4) + OpenTag + "directory" + getPermissions(config, args) + CloseTag + NewLine
-		line = RecInXML(root+PathSeperator+f.Name(), line, n+1, config, args)
+		line += strings.Repeat(tab, n+4) + OpenTag + "directory" + getPermissions(config, info) + CloseTag + NewLine
+		line = RecInXML(root, line, n+1, config, info, permission, fileName)
 	}
 
 	if n > 0 {
@@ -353,5 +352,4 @@ func RecInXML(root string, line string, n int, config TreeConfig, args args) str
 	}
 
 	return line + strings.Repeat(tab, n+2) + closeDirTag
-
 }
