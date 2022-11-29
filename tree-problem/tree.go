@@ -197,7 +197,7 @@ func getFilesDir(cfg TreeConfig, files, dir int) string {
 
 	if cfg.dirOnly {
 		if cfg.showXML {
-			s += "      <report>"+NewLine
+			s += "      <report>" + NewLine
 			s += fmt.Sprintf("%v<directories> %v </directories>%v", strings.Repeat(tab, 3), dir-1, NewLine)
 			s += "	</report"
 		} else if cfg.showJSON {
@@ -208,7 +208,7 @@ func getFilesDir(cfg TreeConfig, files, dir int) string {
 
 	} else {
 		if cfg.showXML {
-			s += "		<report>"+NewLine
+			s += "		<report>" + NewLine
 			s += fmt.Sprintf("%v<directories> %v </directories>%v", strings.Repeat(tab, 3), dir-1, NewLine)
 			s += fmt.Sprintf("%v<files> %v </files>%v", strings.Repeat(tab, 3), files, NewLine)
 			s += "		</report"
