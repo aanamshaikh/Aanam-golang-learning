@@ -196,9 +196,9 @@ func getFilesDir(cfg TreeConfig, files, dir int) string {
 
 	if cfg.dirOnly {
 		if cfg.showXML {
-			s += "      <report>" + NewLine
+			s += "<report>" + NewLine
 			s += fmt.Sprintf("%v<directories> %v </directories>%v", strings.Repeat(tab, 3), dir-1, NewLine)
-			s += "	</report"
+			s += "</report"
 		} else if cfg.showJSON {
 			s += fmt.Sprintf(",%v%v{type:report,directories:%v}%v]", NewLine, strings.Repeat(tab, 3), dir-1, NewLine)
 		} else {
@@ -207,10 +207,10 @@ func getFilesDir(cfg TreeConfig, files, dir int) string {
 
 	} else {
 		if cfg.showXML {
-			s += "		<report>" + NewLine
+			s += "<report>" + NewLine
 			s += fmt.Sprintf("%v<directories> %v </directories>%v", strings.Repeat(tab, 3), dir-1, NewLine)
 			s += fmt.Sprintf("%v<files> %v </files>%v", strings.Repeat(tab, 3), files, NewLine)
-			s += "		</report"
+			s += "</report"
 		} else if cfg.showJSON {
 			s += fmt.Sprintf(",%v%v{type:report,directories:%v,files:%v}%v]", NewLine, strings.Repeat(tab, 3), dir-1, files, NewLine)
 
@@ -270,9 +270,16 @@ func RecInJSON(root string, line string, n int, config TreeConfig, info fs.FileI
 func getPermissions(cfg TreeConfig, info fs.FileInfo) string {
 	per := ""
 	if cfg.showPermission {
-		p := info.Mode().String()
-		octal := fmt.Sprintf("%#o", info.Mode().Perm())
-		per = ",mod :" + octal + ",prot: " + p + ","
+		if cfg.showJSON{
+			p := info.Mode().String()
+			octal := fmt.Sprintf("%#o", info.Mode().Perm())
+			per = ",mod :" + octal + ",prot: " + p
+		}
+		if cfg.showXML{
+			p := info.Mode().String()
+			octal := fmt.Sprintf("%#o", info.Mode().Perm())
+			per = ",mod =" + octal + ",prot= " + p
+		}
 	}
 	return per
 }
@@ -324,7 +331,6 @@ func ReadOnlyDir(files []fs.DirEntry) []fs.DirEntry {
 }
 
 func RecInXML(root string, line string, n int, config TreeConfig, info fs.FileInfo, permission, fileName string) string {
-
 	files := getFiles(root, config)
 
 	if n == 0 {
@@ -339,14 +345,14 @@ func RecInXML(root string, line string, n int, config TreeConfig, info fs.FileIn
 
 	for _, f := range files {
 		if !f.IsDir() {
-			line += strings.Repeat(tab, n+4) + OpenTag + "file" + getPermissions(config, info) + CloseTag +
+			line += strings.Repeat(tab, n+4) + OpenTag + "file name="+f.Name()+getPermissions(config, info) + CloseTag +
 				OpenTag + Slash + "file" + CloseTag + NewLine
 			continue
 		}
-		line += strings.Repeat(tab, n+4) + OpenTag + "directory" + getPermissions(config, info) + CloseTag + NewLine
-		line = RecInXML(root, line, n+1, config, info, permission, fileName)
+		line += strings.Repeat(tab, n+4) + OpenTag + "directory name="+f.Name() + getPermissions(config, info) + CloseTag + NewLine
+		line = RecInXML(root+"/"+f.Name(), line, n+1, config, info, permission, fileName)
 	}
-
+	
 	if n > 0 {
 		return line + strings.Repeat(tab, n+2) + closeDirTag
 	}

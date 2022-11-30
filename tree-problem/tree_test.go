@@ -59,6 +59,15 @@ func TestPrintJsonTree(t *testing.T) {
 	assert.Equal(want, got)
 }
 
+func TestPrintXMLTree(t *testing.T) {
+    want:="<tree>\n    <directory name= dir>\n        <directory name=subdir1>\n          <directory name=subdir>\n        </directory>\n      </directory>\n        <directory name=subdir2>\n      </directory>\n    </directory>\n<report>\n      <directories> 3 </directories>\n</report\n"
+	cfg := TreeConfig{"tree", "dir", true, false, false, 0, true, false, false}
+	got := tree(cfg)
+
+	assert := assert.New(t)
+	assert.Equal(want, got)
+}
+
 func TestPrintWithSortTime(t *testing.T) {
 	want := "  dir\n    └──subdir1\n      └──subdir\n    └──subdir2\n3 directories \n"
 	cfg := TreeConfig{"tree", "dir", true, false, false, 0, false, false, true}
